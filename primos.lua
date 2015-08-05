@@ -5,13 +5,15 @@ Usage:
 Example: isprime 10123
 
 Parameters:
-	-s: simple test, only check if the number is prime or not and show the first divisor. (setting by default)
-	-e: exaustive test, check all the divisors
-	-t: development features 
+	-s [number]: simple test, only check if the number is prime or not and show the first divisor. (setting by default)
+	-e [number]: exaustive test, check all the divisors
+	-t [number]: development features 
+	-g [col] [maxnumber]: for graph primes 
+	-ge [col] [maxnumber]: for graph primes with spaces 
 ]]
 
 -- Define the class PrimeTest
-PrimeTest = {}
+PrimeTest = {fullTest=true, graphSpaces=false}
 
 function PrimeTest:new()
 	local m = {}
@@ -22,9 +24,9 @@ end
 -- Simple Test
 function PrimeTest:SimpleTest(number)
 	if number < 2 then
-		return "Debe ingresar un numeor mayor que uno"
+		return false,"Debe ingresar un numeor mayor que uno"
 	elseif number == 2 then
-		return "El numero es primo"
+		return true,"El numero es primo"
 	else
 		primo = true
 		divisor = 1
@@ -36,18 +38,18 @@ function PrimeTest:SimpleTest(number)
 			end
 		end
 		if primo then
-			return "El numero "..number.." es primo"
+			return primo,"El numero "..number.." es primo"
 		else
-			return "El numero "..number.." NO ES PRIMO, es divisible por "..divisor		
+			return primo,"El numero "..number.." NO ES PRIMO, es divisible por "..divisor		
 		end
 	end
 end
 -- Exaustive Test
 function PrimeTest:Test(number)
 	if number < 2 then
-		return "Debe ingresar un numeor mayor que uno"
+		return false,"Debe ingresar un numeor mayor que uno"
 	elseif number == 2 then
-		return "El numero es primo"
+		return true,"El numero es primo"
 	else
 		return self:inteligentLoop(number)
 	end
@@ -58,31 +60,40 @@ end
 function PrimeTest:inteligentLoop(numero)
 	limite = math.ceil(numero/2)
 	i=1
-	divi = 3;
+	divi = 2;
 	divisors = {}
 	primo = true
 	
-	repeat
-		if numero%divi == 0 then
+	while divi <= limite do
+		if numero%divi == 0 and divi ~= numero then
 			primo = false
 			divisors[#divisors+1] = divi
 			divisors[#divisors+1] = numero/divi
+			if self.fullTest == false then
+			 break 
+			end
 		end
 		limite = math.ceil(numero/i)
 		divi = self:serieIncremento(i)
 		
 		i=i+1
-	until  divi > limite
+	end
 
 	if primo then
-		return "El numero "..numero.." es primo"
+		return primo, "El numero "..numero.." es primo"
 	else
-		return "El numero "..numero.." NO ES PRIMO, es divisible por "..self:divisoresToStr(divisors).." cantidad:"..#divisors		
+		return primo, "El numero "..numero.." NO ES PRIMO, es divisible por "..self:divisoresToStr(divisors).." cantidad:"..#divisors		
 	end
 end
 -- funcion simple para evitar los multiplos de 2 y de 3, de esta menera mejora el rendimiento del algoritmo
 function PrimeTest:serieIncremento(i)
-	
+	--[[
+		i = i-1
+		if i == 0 then
+			return 2 --little patch to solve 2 multiples
+		end
+
+	]]
 	indice = math.ceil(i/2) 
 	-- indice*2-1 --debo usar esto para mejorar la selecion
 	
@@ -149,28 +160,58 @@ function PrimeTest:divisoresToStr(divisores)
 	end
 	return resp
 end
+--Graph methos to understand Primes
+function PrimeTest:GraphPrimes(col,maxnumber)
+	self.fullTest = false
+	
+	for i = 1, maxnumber do
+		prime,msg = self:Test(i)
+		--print(msg)
+		if(prime) then
+			io.write("o")
+		else
+			if self.graphSpaces == true then
+				io.write(" ")
+			else
+				io.write("-")
+			end
+				
+		end
+		if i % col == 0 then io.write("\n") end
+	end
+	
+	io.write("\n")
+
+	return "Grafico de testing finalizado, n° de columnas "..col.." y maxnumber: "..maxnumber
+end
+
 
 -- Initialize funtion 
 function PrimeTest:init(arg)
-	local result = "Init message"
+	local isprime,msg = false,"Init message"
 	
 	if(arg[1]=='-e')then
-		result = self:Test(tonumber(arg[2]))
+		isprime,msg = self:Test(tonumber(arg[2]))
 	elseif arg[1] == '-s' then
-		result = self:SimpleTest(tonumber(arg[2]))
+		isprime,msg = self:SimpleTest(tonumber(arg[2]))
 	elseif arg[1] == '-t' then
-		result = self:serialTest(tonumber(arg[2]))
+		msg = self:serialTest(tonumber(arg[2]))
+	elseif arg[1] == '-g' then
+		msg = self:GraphPrimes(arg[2],arg[3])
+	elseif arg[1] == '-ge' then
+		self.graphSpaces = true	
+		msg = self:GraphPrimes(arg[2],arg[3])
 	else
-		if(arg[1] == '-s')then arg[1] = arg[2] end
 
-		result = self:SimpleTest(tonumber(arg[1]))
+		isprime,msg = self:SimpleTest(tonumber(arg[1]))
 	end
 
-	print(result);
+	print(msg);
 
 end
 
-if not arg[1] or ((arg[1] == '-e' or arg[1] == '-s') and not arg[2]) then
+--control para comando
+if not arg[1] or ((arg[1] == '-e' or arg[1] == '-s') and not arg[2]) or (arg[1] == '-g' and (not arg[2] or not arg[3]))then
 	print(usage_str)
 	os.exit(0)
 end
