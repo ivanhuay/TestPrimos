@@ -7,7 +7,7 @@ Example: isprime 10123
 Parameters:
 	-s [number]: simple test, only check if the number is prime or not and show the first divisor. (setting by default)
 	-e [number]: exaustive test, check all the divisors
-	-t [number]: development features 
+	-t [number]  [minnumber](optional): development features to get serie of nonmultiples values 
 	-g [col] [maxnumber]: for graph primes 
 	-ge [col] [maxnumber]: for graph primes with spaces 
 ]]
@@ -109,13 +109,27 @@ end
 --la idea de esta funcion es obtener una serie generica para conseguir los no multiplos de un numero
 --como la que esta arriba para el 3 pero sin la correccion para los pares, despue hare otro con correcciones
 --peor primero necesito la q no tiene correcciones para avanzar conceptualmente.
-function PrimeTest:getInmultiple(i,number)
+function PrimeTest:getInmultiple(i,number,minnumber)
 	
 	dispercion = math.floor(number/2)
 	
 	cantidad = dispercion*2
 	
 	indice = math.ceil(i/cantidad)
+
+	-- este arreglo puede facilitar la comparacion de elementos para resolver alguanas ecucaciones
+	-- [1]g3(x1)-g2(x2) = 0 con un minimo en [2]a = x1+x2 es la solucion para el proximo numero primo
+	-- esta solucion segun estoy viendo ahora no funcionaria para n-simos valores, para cada primo mas se necesita otro para de ecuacion [1] y [2]
+	if minnumber then
+		
+		aprox = math.floor(minnumber/number)--lo que deberia valer el indice
+		
+		indice = indice + aprox -- una aproximacion temporal para elevar el indice y mantener la misma dispercion
+
+		i = i + aprox*cantidad	-- sospecho que esta correccion puede servir para ajustar el i y que no tenga errores
+
+	end	
+	
 
 	final_num = number*indice + self:getSum(i,dispercion)
 	
@@ -138,10 +152,10 @@ function PrimeTest:getSum(n,disp)
 end
 --TESTING:
 --FUNCION DE TESTIN DE LAS NUEVAS FUNCIONES
-function PrimeTest:serialTest(number)
+function PrimeTest:serialTest(number,maxnumber)
 	if not number then number = 2 end
 	for i = 1, 100 do
-		print(self:getInmultiple(i,number))
+		print(self:getInmultiple(i,number,maxnumber))
 	end
 	return "End of testing serie for numer: "..number
 end
@@ -195,7 +209,7 @@ function PrimeTest:init(arg)
 	elseif arg[1] == '-s' then
 		isprime,msg = self:SimpleTest(tonumber(arg[2]))
 	elseif arg[1] == '-t' then
-		msg = self:serialTest(tonumber(arg[2]))
+		msg = self:serialTest(tonumber(arg[2]),tonumber(arg[3]))
 	elseif arg[1] == '-g' then
 		msg = self:GraphPrimes(arg[2],arg[3])
 	elseif arg[1] == '-ge' then
