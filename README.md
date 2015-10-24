@@ -1,4 +1,4 @@
-#isprie command line
+#Command line: isprime
 
 ### Usage
 ```code
